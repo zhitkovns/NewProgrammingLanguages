@@ -34,8 +34,9 @@ Manifest.toml
 *.jl.cov
 *.jl.mem
 
-# Swift
-*.dSYM/
+# Erlang
+*.beam
+erl_crash.dump
 
 # Zig
 zig-cache/
@@ -45,3 +46,9 @@ zig-out/
 __pycache__/
 *.pyc
 *.mojopkg
+
+*.txt
+!input.txt
+client
+*.d
+.venv/

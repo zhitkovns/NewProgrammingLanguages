@@ -27,12 +27,12 @@
 ## Установка
 
 ```bash
-sudo apt install dmd-bin
+sudo apt install ldc
 ```
 
 ## Запуск
 
 ```bash
-dmd main.d
+ldc2 main.d
 ./main [input.txt]
 ```

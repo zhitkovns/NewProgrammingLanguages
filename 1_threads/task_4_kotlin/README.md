@@ -48,3 +48,5 @@ sudo apt install kotlin
 kotlinc main.kt -include-runtime -d main.jar
 java -jar main.jar
 ```
+Пакет тянет JVM (OpenJDK) как зависимость.
+Код совместим с Kotlin 1.3+.

@@ -3,7 +3,7 @@ use warnings;
 use feature 'say';
 
 my $input_file = shift @ARGV // 'access.log';
-my $output_file = shift @ARGV // 'report.txt';
+my $output_file = shift @ARGV // 'output.txt';
 
 open(my $in, '<', $input_file) or die "cannot open $input_file: $!";
 

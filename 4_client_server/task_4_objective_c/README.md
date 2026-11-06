@@ -29,12 +29,52 @@ TCP-клиент на низкоуровневых BSD-сокетах (`<sys/soc
 Нужен clang и GNUstep (свободная реализация Foundation):
 
 ```bash
-sudo apt install clang gnustep-base-runtime gnustep-base-devel
+sudo apt install gnustep-devel gobjc
 ```
 
 ## Запуск
 
+Сборка:
+
 ```bash
-clang -framework Foundation main.m -o client
+gcc `gnustep-config --objc-flags` main.m -o client `gnustep-config --base-libs`
+```
+
+Запуск (требуется работающий сервер на 127.0.0.1:8080, например из
+task_1_odin):
+
+```bash
 ./client
 ```
+Успешный вывод клиента:
+
+```text
+attempt 1 of 3
+connected
+sent 28 bytes
+received: Hello from Objective-C client
+```
+
+Вывод сервера в этот момент:
+
+```text
+server listening on 127.0.0.1:8080
+client 1 connected
+received 29 bytes
+```
+
+Проверка ретраев (сервер не запущен) - три попытки с паузой 1 секунда:
+
+```text
+attempt 1 of 3
+connect error: Connection refused
+attempt 2 of 3
+connect error: Connection refused
+attempt 3 of 3
+connect error: Connection refused
+failed to connect after 3 attempts
+```
+
+NSLog пишет в stderr и добавляет временной префикс
+YYYY-MM-DD HH:MM:SS.mmm client[PID:tid] перед каждой строкой - это
+штатное поведение GNUstep, не ошибка.

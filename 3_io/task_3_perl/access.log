@@ -1,0 +1,11 @@
+192.168.1.10 GET /index.html 200
+192.168.1.20 POST /api/login 200
+192.168.1.10 GET /about 200
+10.0.0.5 GET /admin 403
+192.168.1.30 GET /missing 404
+192.168.1.10 GET /api/data 200
+10.0.0.5 GET /secret 403
+192.168.1.20 GET /missing 404
+192.168.1.40 POST /api/login 500
+garbage line without proper format
+192.168.1.10 GET / 200

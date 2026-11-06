@@ -37,5 +37,5 @@ sudo apt install perl
 ## Запуск
 
 ```bash
-perl main.pl [access.log] [report.txt]
+perl main.pl [access.log] [output.txt]
 ```

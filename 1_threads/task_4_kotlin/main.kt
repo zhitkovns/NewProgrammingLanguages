@@ -24,7 +24,7 @@ fun transfer(from: Account, to: Account, amount: Long) {
 
 fun main() {
     val accounts = (1..5).map { Account(it, 1000L) }
-    val initialTotal = accounts.sumOf { it.balance }
+    val initialTotal = accounts.map { it.balance }.sum()
 
     val threads = (1..4).map { t ->
         thread {
@@ -40,7 +40,7 @@ fun main() {
     }
     threads.forEach { it.join() }
 
-    val finalTotal = accounts.sumOf { it.balance }
+    val finalTotal = accounts.map { it.balance }.sum()
     println("initial total: $initialTotal")
     println("final total: $finalTotal")
     println("invariant preserved: ${initialTotal == finalTotal}")

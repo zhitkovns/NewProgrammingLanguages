@@ -28,11 +28,11 @@ int main(string[] args) {
         pairs.sort!((a, b) =>
             a.value > b.value || (a.value == b.value && a.key < b.key));
 
-        auto out = File(outputFile, "w");
+        auto fout = File(outputFile, "w");
         foreach (p; pairs) {
-            out.writefln("%-20s %d", p.key, p.value);
+            fout.writefln("%-20s %d", p.key, p.value);
         }
-        out.close;
+        fout.close;
 
         writeln("unique words: ", freq.length);
         writeln("written to ", outputFile);

@@ -35,50 +35,56 @@ static int try_connect(int *out_sock) {
 }
 
 int main(int argc, const char *argv[]) {
-    @autoreleasepool {
-        int sock = -1;
-        const int attempts = 3;
+    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+    int ret = 0;
+    int sock = -1;
+    int i;
+    ssize_t sent;
+    ssize_t received;
+    const int attempts = 3;
+    const char *msg = "Hello from Objective-C client";
+    char buffer[1024];
 
-        for (int i = 0; i < attempts; i++) {
-            NSLog(@"attempt %d of %d", i + 1, attempts);
-            if (try_connect(&sock) == 0) {
-                break;
-            }
-            sleep(1);
+    for (i = 0; i < attempts; i++) {
+        NSLog(@"attempt %d of %d", i + 1, attempts);
+        if (try_connect(&sock) == 0) {
+            break;
         }
-
-        if (sock < 0) {
-            NSLog(@"failed to connect after %d attempts", attempts);
-            return 1;
-        }
-
-        NSLog(@"connected");
-
-        const char *msg = "Hello from Objective-C client";
-        ssize_t sent = send(sock, msg, strlen(msg), 0);
-        if (sent < 0) {
-            NSLog(@"send error: %s", strerror(errno));
-            close(sock);
-            return 1;
-        }
-        NSLog(@"sent %zd bytes", sent);
-
-        char buffer[1024];
-        ssize_t received = recv(sock, buffer, sizeof(buffer) - 1, 0);
-        if (received < 0) {
-            NSLog(@"recv error: %s", strerror(errno));
-            close(sock);
-            return 1;
-        }
-        if (received == 0) {
-            NSLog(@"connection closed by peer");
-            close(sock);
-            return 1;
-        }
-        buffer[received] = '\0';
-        NSLog(@"received: %s", buffer);
-
-        close(sock);
+        sleep(1);
     }
-    return 0;
+
+    if (sock < 0) {
+        NSLog(@"failed to connect after %d attempts", attempts);
+        ret = 1;
+        goto cleanup;
+    }
+
+    NSLog(@"connected");
+
+    sent = send(sock, msg, strlen(msg), 0);
+    if (sent < 0) {
+        NSLog(@"send error: %s", strerror(errno));
+        ret = 1;
+        goto cleanup;
+    }
+    NSLog(@"sent %zd bytes", sent);
+
+    received = recv(sock, buffer, sizeof(buffer) - 1, 0);
+    if (received < 0) {
+        NSLog(@"recv error: %s", strerror(errno));
+        ret = 1;
+        goto cleanup;
+    }
+    if (received == 0) {
+        NSLog(@"connection closed by peer");
+        ret = 1;
+        goto cleanup;
+    }
+    buffer[received] = '\0';
+    NSLog(@"received: %s", buffer);
+
+cleanup:
+    if (sock >= 0) close(sock);
+    [pool drain];
+    return ret;
 }

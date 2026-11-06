@@ -6,7 +6,7 @@
 ## Языки
 
 Ada, D, Elixir, Groovy, Haskell, Julia, Lua, Kotlin, ML, Mojo, Objective-C,
-ODIN, Perl, Ruby, Rust, Scala, Scheme, Swift, Zig, Lisp
+ODIN, Perl, Ruby, Rust, Scala, Scheme, Erlang, Zig, Lisp
 
 ---
 
@@ -119,7 +119,7 @@ skipped) пишется в файл.
 |---|--------|------|-------|
 | 1 | TCP-эхо-сервер на несколько подключений | ODIN | `task_1_odin` |
 | 2 | TCP-клиент с ретраями подключения | Zig | `task_2_zig` |
-| 3 | TCP-клиент с таймаутом | Swift | `task_3_swift` |
+| 3 | TCP-клиент с таймаутом | Erlang | `task_3_erlang` |
 | 4 | TCP-клиент с ретраями через BSD-сокеты | Objective-C | `task_4_objective_c` |
 
 4.1 **ODIN.** Сервер слушает `127.0.0.1:8080`, принимает до 3 клиентов
@@ -130,10 +130,10 @@ skipped) пишется в файл.
 паузой 500 мс. Отправляет фиксированное сообщение, читает до 1024 байт.
 Ошибки подключения/чтения/записи - в stderr.
 
-4.3 **Swift.** TCP-клиент на `Network.framework`. Ждет `.ready` в
-stateUpdateHandler, отправляет сообщение, читает ответ. Таймаут 5 секунд
-реализован через DispatchQueue.asyncAfter. Состояния .failed/.waiting
-обрабатываются.
+4.3 **Erlang.** TCP-клиент на `gen_tcp` из стандартной библиотеки.
+До 3 попыток подключения с таймаутом 1000 мс и паузой 1 секунда.
+После подключения - отправка сообщения и чтение ответа с таймаутом
+5000 мс. При истечении - печать "timeout waiting for response".
 
 4.4 **Objective-C.** Клиент на BSD-сокетах: `socket`, `connect`, `send`,
 `recv`. До 3 попыток с паузой 1 секунда. Все ошибки (socket/connect/send/

@@ -1,15 +1,19 @@
 const std = @import("std");
+const net = std.Io.net;
 
-pub fn main() !void {
-    const allocator = std.heap.page_allocator;
-    var stream: ?std.net.Stream = null;
+pub fn main(init: std.process.Init) !void {
+    const io = init.io;
 
+    var stream: ?net.Stream = null;
     var attempts: u32 = 0;
+
     while (attempts < 3) : (attempts += 1) {
         std.debug.print("attempt {d} of 3\n", .{attempts + 1});
-        stream = std.net.tcpConnectToHost(allocator, "127.0.0.1", 8080) catch |err| {
+
+        const address = try net.IpAddress.parseIp4("127.0.0.1", 8080);
+        stream = address.connect(io, .{ .mode = .stream, .protocol = .tcp }) catch |err| {
             std.debug.print("connect error: {s}\n", .{@errorName(err)});
-            std.time.sleep(500 * std.time.ns_per_ms);
+            io.sleep(.fromMilliseconds(500), .awake) catch {};
             continue;
         };
         break;
@@ -21,26 +25,29 @@ pub fn main() !void {
     }
 
     const conn = stream.?;
-    defer conn.close();
+    defer conn.close(io);
 
     std.debug.print("connected\n", .{});
 
-    const message = "Hello from Zig client";
-    _ = conn.write(message) catch |err| {
-        std.debug.print("write error: {s}\n", .{@errorName(err)});
-        return err;
-    };
-    std.debug.print("sent: {s}\n", .{message});
+    const message = "Hello from Zig client\n";
 
-    var buffer: [1024]u8 = undefined;
-    const n = conn.read(&buffer) catch |err| {
+    var write_buf: [1024]u8 = undefined;
+    var writer = conn.writer(io, &write_buf);
+    try writer.interface.writeAll(message);
+    try writer.interface.flush();
+    std.debug.print("sent: Hello from Zig client\n", .{});
+
+    var read_buf: [1024]u8 = undefined;
+    var reader = conn.reader(io, &read_buf);
+
+    const maybe_line = reader.interface.takeDelimiter('\n') catch |err| {
         std.debug.print("read error: {s}\n", .{@errorName(err)});
         return err;
     };
 
-    if (n == 0) {
-        std.debug.print("connection closed by peer\n", .{});
-        return;
+    if (maybe_line) |line| {
+        std.debug.print("received: {s}\n", .{line});
+    } else {
+        std.debug.print("connection closed by peer before newline\n", .{});
     }
-    std.debug.print("received: {s}\n", .{buffer[0..n]});
 }

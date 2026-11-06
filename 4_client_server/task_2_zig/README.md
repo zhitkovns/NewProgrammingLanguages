@@ -8,9 +8,21 @@ TCP-клиент к 127.0.0.1:8080 с до 3 попытками подключе
 500 мс между ними. После успешного подключения отправляет
 "Hello from Zig client", читает до 1024 байт ответа, печатает.
 
-Используется `std.net` - стандартный пакет. `tcpConnectToHost`
-возвращает `Stream` (обертка над сокетом). `stream.write`/`stream.read`
-- методы стрима.
+Используется `std.Io.net` - стандартный пакет Zig 0.16. В новой версии
+языка сетевой API переработан: `std.net.Stream` больше не существует,
+вместо него - `std.Io.net.Stream`, а объект `io` (интерфейс ввода-
+вывода) передается явно почти во все сетевые функции.
+
+Подключение: `net.IpAddress.parseIp4("127.0.0.1", 8080)` создает адрес,
+затем `address.connect(io, .{ .mode = .stream, .protocol = .tcp })`
+открывает соединение и возвращает `Stream`.
+
+Запись и чтение идут через буферизованные обертки: `conn.writer(io, &buf)`
+возвращает writer с интерфейсом `writeAll`/`flush`; `conn.reader(io, &buf)`
+возвращает reader с интерфейсом `take(n)`. Явные буферы нужны, чтобы
+`std.Io` мог группировать мелкие операции.
+
+Пауза между попытками - `io.sleep(.fromMilliseconds(500), .awake)`.
 
 Обработка ошибок: Zig использует error union - `!T` в сигнатуре
 функции означает "T или ошибка". Конструкция `catch |err| { ... }`
@@ -19,17 +31,17 @@ TCP-клиент к 127.0.0.1:8080 с до 3 попытками подключе
 логируем и возвращаем ошибку (retry дальше уже не имеет смысла,
 соединение установлено).
 
-`std.time.sleep` - стандартная функция паузы.
-
 ## Формат входных и выходных данных
 
 Сервер должен быть запущен заранее (например, из task_1_odin).
-Отправляется одна строка, читается ответ. В stderr - диагностика.
+Отправляется одна строка, читается ответ. В stderr - диагностика
+(номер попытки, статус подключения, отправленные и полученные данные,
+ошибки).
 
 ## Установка
 
 ```bash
-sudo apt install zig
+sudo snap install zig --classic --beta
 ```
 
 ## Запуск
@@ -37,4 +49,26 @@ sudo apt install zig
 ```bash
 zig build-exe main.zig
 ./main
+```
+
+Перед запуском клиента нужен работающий сервер на 127.0.0.1:8080
+(например, `task_1_odin`). Успешный вывод:
+
+```
+attempt 1 of 3
+connected
+sent: Hello from Zig client
+received: Hello from Zig client
+```
+
+При отсутствии сервера:
+
+```
+attempt 1 of 3
+connect error: ConnectionRefused
+attempt 2 of 3
+connect error: ConnectionRefused
+attempt 3 of 3
+connect error: ConnectionRefused
+failed to connect after 3 attempts
 ```

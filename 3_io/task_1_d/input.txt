@@ -1,0 +1,3 @@
+Hello world, hello D language.
+D is a systems programming language.
+Hello again, world!
