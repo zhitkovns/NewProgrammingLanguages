@@ -34,19 +34,17 @@ Mojo активно развивается, API может незначител�
 строки с результатами прямых/обратных преобразований и строка с
 пойманной ошибкой.
 
-## Установка
+## Установка и запуск
 
-Mojo нет в apt. Устанавливается через Modular CLI:
+Mojo активно развивается, и его компилятор требует от процессора
+поддержки современных инструкций (в частности, **AVX2**).
 
+Требуется установить `uv` и создать виртуальное окружение:
 ```bash
-curl -s https://get.modular.com | sh -
-modular auth
-modular install mojo
-```
-Затем добавить Mojo в PATH по инструкции, которую выведет установщик.
+uv venv
+source .venv/bin/activate
+uv pip install mojo --prerelease allow
 
-## Запуск
-
-```bash
-mojo main.mojo
+mojo build main.mojo -o main
+./main
 ```
