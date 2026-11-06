@@ -25,7 +25,16 @@
 Входной файл - argv[0] или `config.ini`. Выходной файл - argv[1] или
 `config_out.ini`. В консоль - сводка по секциям.
 
+## Установка
+
+Ruby предустановлен в большинстве дистрибутивов. Если нет:
+
+```bash
+sudo apt install ruby
+```
+
 ## Запуск
 
 ```bash
 ruby main.rb [config.ini] [config_out.ini]
+```

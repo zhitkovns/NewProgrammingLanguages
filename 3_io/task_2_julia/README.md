@@ -23,7 +23,18 @@
 Выходной файл - argv[2] или `stats.txt` с полями count/sum/mean/min/max/
 skipped.
 
+## Установка
+
+В стандартных репозиториях Ubuntu Julia либо отсутствует, либо старая.
+Рекомендуется поставить через juliaup:
+
+```bash
+curl -fsSL https://install.julialang.org | sh
+source ~/.bashrc
+```
+
 ## Запуск
 
 ```bash
 julia main.jl [data.csv] [stats.txt]
+```

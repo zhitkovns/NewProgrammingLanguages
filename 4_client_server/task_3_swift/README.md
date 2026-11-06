@@ -27,8 +27,20 @@ stateUpdateHandler, который вызывается при перехода�
 Сервер на 127.0.0.1:8080. Отправляется одна строка, читается ответ.
 В stdout - диагностика (connect state, ошибки, ответ).
 
+## Установка
+
+Swift для Linux доступен через swift.org. Инструкция:
+https://www.swift.org/install/linux/
+
+Для Ubuntu 22.04+ обычно:
+
+```bash
+sudo apt install swift
+```
+
 ## Запуск
 
 ```bash
 swiftc main.swift -o client
 ./client
+```

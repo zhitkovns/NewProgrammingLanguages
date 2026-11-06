@@ -31,8 +31,15 @@ single consumer.
 argv: `<pattern> <file1> [file2 ...]`. Выходные данные: строки в
 формате `файл:строка:текст` и общее количество совпадений.
 
+## Установка
+
+```bash
+sudo apt install rustc
+```
+
 ## Запуск
 
 ```bash
 rustc main.rs
 ./main hello file1.txt file2.txt file3.txt
+```

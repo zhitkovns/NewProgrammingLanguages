@@ -36,8 +36,15 @@
 Выходные данные: начальная и конечная суммы, флаг сохранения
 инварианта, финальные балансы.
 
+## Установка
+
+```bash
+sudo apt install kotlin
+```
+
 ## Запуск
 
 ```bash
 kotlinc main.kt -include-runtime -d main.jar
 java -jar main.jar
+```

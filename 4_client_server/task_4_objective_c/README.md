@@ -24,8 +24,17 @@ TCP-клиент на низкоуровневых BSD-сокетах (`<sys/soc
 Сервер на 127.0.0.1:8080. Отправляется одна строка, читается ответ.
 Все сообщения - в stderr через `NSLog`.
 
+## Установка
+
+Нужен clang и GNUstep (свободная реализация Foundation):
+
+```bash
+sudo apt install clang gnustep-base-runtime gnustep-base-devel
+```
+
 ## Запуск
 
 ```bash
 clang -framework Foundation main.m -o client
 ./client
+```

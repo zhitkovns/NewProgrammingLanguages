@@ -1,0 +1,2 @@
+nothing here
+hello from file2

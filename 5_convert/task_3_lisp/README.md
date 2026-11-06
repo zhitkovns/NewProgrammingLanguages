@@ -24,6 +24,12 @@ Round-trip проверяется через `equal`: `parse(dump(alist))` до�
 Входных данных нет (alist задан в main). Выходные данные: оригинал,
 закодированная строка, декодированный alist и флаг round-trip.
 
+## Установка
+
+```bash
+sudo apt install sbcl
+```
+
 ## Запуск
 
 ```bash

@@ -26,7 +26,16 @@ stderr (`warn`). Выходной отчет: общее число, разби�
 Входной файл - argv[0] или `access.log`. Выходной файл - argv[1] или
 `report.txt` (текстовый отчет).
 
+## Установка
+
+Perl предустановлен в большинстве дистрибутивов Linux. Если нет:
+
+```bash
+sudo apt install perl
+```
+
 ## Запуск
 
 ```bash
 perl main.pl [access.log] [report.txt]
+```

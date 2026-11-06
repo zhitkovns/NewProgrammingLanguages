@@ -1,0 +1,47 @@
+# Ada
+*.o
+*.ali
+*.exe
+main
+b~*
+*.bexch
+
+# Rust
+target/
+*.pdb
+
+# Elixir
+_build/
+deps/
+erl_crash.dump
+
+# Kotlin / JVM
+*.jar
+*.class
+
+# Haskell
+*.hi
+
+# Scala
+project/target/
+target/
+
+# Lua
+*.luac
+
+# Julia
+Manifest.toml
+*.jl.cov
+*.jl.mem
+
+# Swift
+*.dSYM/
+
+# Zig
+zig-cache/
+zig-out/
+
+# Mojo
+__pycache__/
+*.pyc
+*.mojopkg

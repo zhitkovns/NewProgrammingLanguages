@@ -28,7 +28,14 @@ Round-trip: `csvToJson` -> `jsonToCsv` дает CSV с тем же наборо�
 Входных данных нет - CSV-строка задана в main. Выходные данные:
 исходный JSON и обратно восстановленный CSV.
 
+## Установка
+
+```bash
+sudo apt install groovy
+```
+
 ## Запуск
 
 ```bash
 groovy main.groovy
+```
