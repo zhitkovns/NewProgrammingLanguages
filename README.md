@@ -6,7 +6,7 @@
 ## Языки
 
 Ada, D, Elixir, Groovy, Haskell, Julia, Lua, Kotlin, ML, Mojo, Objective-C,
-ODIN, Perl, Ruby, Rust, Scala, Scheme, Swift, Zig, Lisp
+ODIN, Perl, Ruby, Rust, Scala, Scheme, Erlang, Zig, Lisp
 
 ---
 
