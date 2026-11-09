@@ -1,57 +1,36 @@
-def int_to_hex(n: Int) -> String:
-    if n == 0:
-        return "0"
-    var digits = String("0123456789abcdef")
-    var result = String("")
-    var x = n
-    while x > 0:
-        var d = x % 16
-        result = String(digits[byte=d]) + result
-        x = x // 16
-    return result
+def extract_zip_catalog(zip_path: String, csv_path: String) raises:
+    # Открываем файл и читаем его как сырые байты
+    var file = open(zip_path, "r")
+    var data = file.read_bytes()
+    file.close()
 
-def hex_digit_value(c: UInt8) raises -> Int:
-    var zero = UInt8(ord("0"))
-    var nine = UInt8(ord("9"))
-    var a = UInt8(ord("a"))
-    var f = UInt8(ord("f"))
-    var upper_a = UInt8(ord("A"))
-    var upper_f = UInt8(ord("F"))
-    
-    if c >= zero and c <= nine:
-        return Int(c - zero)
-    if c >= a and c <= f:
-        return Int(c - a) + 10
-    if c >= upper_a and c <= upper_f:
-        return Int(c - upper_a) + 10
-    
-    var err_char = chr(Int(c))
-    raise Error("invalid hex digit: " + err_char)
+    var output = open(csv_path, "w")
+    output.write("filename,compressed_size,uncompressed_size,compression_method\n")
 
-def hex_to_int(s: String) raises -> Int:
-    if s.byte_length() == 0:
-        raise Error("empty hex string")
-    
-    var result = 0
-    for b in s.as_bytes():
-        var d = hex_digit_value(b)
-        result = result * 16 + d
-    return result
+    var i = 0
+    var length = len(data)
+
+    while i < length - 4:
+        if data[i] == 0x50 and data[i+1] == 0x4b and data[i+2] == 0x01 and data[i+3] == 0x02:
+            var method = Int(data[i+10]) | (Int(data[i+11]) << 8)
+            var comp_size = Int(data[i+20]) | (Int(data[i+21]) << 8) | (Int(data[i+22]) << 16) | (Int(data[i+23]) << 24)
+            var uncomp_size = Int(data[i+24]) | (Int(data[i+25]) << 8) | (Int(data[i+26]) << 16) | (Int(data[i+27]) << 24)
+            var name_len = Int(data[i+28]) | (Int(data[i+29]) << 8)
+            var extra_len = Int(data[i+30]) | (Int(data[i+31]) << 8)
+            var comment_len = Int(data[i+32]) | (Int(data[i+33]) << 8)
+
+            var name = String()
+            for j in range(i+46, i+46+name_len):
+                name += chr(Int(data[j]))
+
+            output.write(name + "," + String(comp_size) + "," + String(uncomp_size) + "," + String(method) + "\n")
+
+            i += 46 + name_len + extra_len + comment_len
+        else:
+            i += 1
+
+    output.close()
+    print("Successfully extracted catalog to " + csv_path)
 
 def main() raises:
-    var n: Int = 255
-    print("decimal:", n, "-> hex:", int_to_hex(n))
-
-    var hex_str = "ff"
-    print("hex:", hex_str, "-> decimal:", hex_to_int(hex_str))
-
-    var f: Float64 = 3.14159
-    var i = Int(f)
-    print("float:", f, "-> int:", i)
-    print("int:", i, "-> float:", Float64(i))
-
-    try:
-        var bad = hex_to_int("xyz")
-        print("unexpected success:", bad)
-    except e:
-        print("error caught:", e)
+    extract_zip_catalog("test.zip", "output.csv")

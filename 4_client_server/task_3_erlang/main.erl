@@ -1,59 +1,78 @@
 -module(main).
--export([main/0]).
+-export([start/0, manager_loop/1, handle_client/1]).
 
--define(HOST, "127.0.0.1").
--define(PORT, 8080).
--define(MESSAGE, <<"Hello from Erlang client">>).
--define(CONNECT_TIMEOUT_MS, 1000).
--define(RECV_TIMEOUT_MS, 5000).
--define(MAX_ATTEMPTS, 3).
+start() ->
+    ManagerPid = spawn(fun() -> manager_loop(#{}) end),
+    register(semaphore_manager, ManagerPid),
+    
+    {ok, ListenSocket} = gen_tcp:listen(8083, [binary, {packet, 0}, {active, false}, {reuseaddr, true}]),
+    io:format("Semaphore TCP server listening on 127.0.0.1:8083~n"),
+    accept_loop(ListenSocket).
 
-main() ->
-    case connect_with_retries(?MAX_ATTEMPTS) of
+accept_loop(ListenSocket) ->
+    case gen_tcp:accept(ListenSocket) of
         {ok, Socket} ->
-            io:format("connected~n"),
-            send_and_receive(Socket),
-            gen_tcp:close(Socket);
+            io:format("Client connected~n"),
+            spawn(fun() -> handle_client(Socket) end),
+            accept_loop(ListenSocket);
         {error, Reason} ->
-            io:format(standard_error,
-                      "failed to connect after ~p attempts: ~p~n",
-                      [?MAX_ATTEMPTS, Reason]),
-            halt(1)
+            io:format("Accept error: ~p~n", [Reason])
     end.
 
-connect_with_retries(MaxAttempts) ->
-    connect_with_retries(1, MaxAttempts).
-
-connect_with_retries(Attempt, MaxAttempts) when Attempt =< MaxAttempts ->
-    io:format("attempt ~p of ~p~n", [Attempt, MaxAttempts]),
-    Options = [binary, {packet, 0}, {active, false}],
-    case gen_tcp:connect(?HOST, ?PORT, Options, ?CONNECT_TIMEOUT_MS) of
-        {ok, Socket} ->
-            {ok, Socket};
-        {error, Reason} ->
-            io:format(standard_error,
-                      "connect error: ~p~n", [Reason]),
-            timer:sleep(1000),
-            connect_with_retries(Attempt + 1, MaxAttempts)
-    end;
-connect_with_retries(_, _) ->
-    {error, connect_failed}.
-
-send_and_receive(Socket) ->
-    case gen_tcp:send(Socket, ?MESSAGE) of
-        ok ->
-            io:format("sent: ~s~n", [?MESSAGE]),
-            receive_response(Socket);
-        {error, Reason} ->
-            io:format(standard_error, "send error: ~p~n", [Reason])
-    end.
-
-receive_response(Socket) ->
-    case gen_tcp:recv(Socket, 0, ?RECV_TIMEOUT_MS) of
+handle_client(Socket) ->
+    case gen_tcp:recv(Socket, 0) of
         {ok, Data} ->
-            io:format("received: ~s~n", [Data]);
-        {error, timeout} ->
-            io:format("timeout waiting for response~n");
-        {error, Reason} ->
-            io:format(standard_error, "recv error: ~p~n", [Reason])
+            Line = string:trim(binary_to_list(Data)),
+            io:format("Received command: ~s~n", [Line]),
+            case string:split(Line, " ") of
+                ["ACQUIRE", Name] ->
+                    semaphore_manager ! {acquire, Name, self()},
+                    receive
+                        {acquired, Name} ->
+                            gen_tcp:send(Socket, "OK\n"),
+                            io:format("Granted ~s~n", [Name]),
+                            handle_client(Socket)
+                    end;
+                ["RELEASE", Name] ->
+                    semaphore_manager ! {release, Name},
+                    gen_tcp:send(Socket, "OK\n"),
+                    io:format("Released ~s~n", [Name]),
+                    handle_client(Socket);
+                _ ->
+                    gen_tcp:send(Socket, "ERROR\n"),
+                    handle_client(Socket)
+            end;
+        {error, closed} ->
+            io:format("Client disconnected~n"),
+            gen_tcp:close(Socket)
+    end.
+
+manager_loop(State) ->
+    receive
+        {acquire, Name, Pid} ->
+            case maps:get(Name, State, free) of
+                free ->
+                    Pid ! {acquired, Name},
+                    NewState = State#{Name => {busy, queue:new()}},
+                    manager_loop(NewState);
+                {busy, Queue} ->
+                    NewQueue = queue:in(Pid, Queue),
+                    NewState = State#{Name => {busy, NewQueue}},
+                    manager_loop(NewState)
+            end;
+        {release, Name} ->
+            case maps:get(Name, State, free) of
+                free ->
+                    manager_loop(State);
+                {busy, Queue} ->
+                    case queue:out(Queue) of
+                        {{value, NextPid}, NewQueue} ->
+                            NextPid ! {acquired, Name},
+                            NewState = State#{Name => {busy, NewQueue}},
+                            manager_loop(NewState);
+                        {empty, _} ->
+                            NewState = State#{Name => free},
+                            manager_loop(NewState)
+                    end
+            end
     end.

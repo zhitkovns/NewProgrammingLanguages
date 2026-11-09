@@ -1,46 +1,66 @@
 use strict;
 use warnings;
-use feature 'say';
 
-my $input_file = shift @ARGV // 'access.log';
-my $output_file = shift @ARGV // 'output.txt';
+my @crc_table;
+for my $n (0 .. 255) {
+    my $c = $n;
+    for (1 .. 8) {
+        if ($c & 1) {
+            $c = 0xedb88320 ^ ($c >> 1);
+        } else {
+            $c = $c >> 1;
+        }
+    }
+    $crc_table[$n] = $c;
+}
 
-open(my $in, '<', $input_file) or die "cannot open $input_file: $!";
+sub calculate_crc32 {
+    my ($data) = @_;
+    my $crc = 0xffffffff;
+    for my $byte (unpack("C*", $data)) {
+        $crc = $crc_table[($crc ^ $byte) & 0xff] ^ ($crc >> 8);
+    }
+    return $crc ^ 0xffffffff;
+}
 
-my $total = 0;
-my %status_count;
-my %ip_count;
+my $filename = $ARGV[0] // 'test.png';
 
-while (my $line = <$in>) {
-    chomp $line;
-    if ($line =~ /^(\S+)\s+\S+\s+\S+\s+(\d{3})\b/) {
-        my $ip = $1;
-        my $status = $2;
-        $total++;
-        $status_count{$status}++;
-        $ip_count{$ip}++;
+open(my $fh, '<:raw', $filename) or die "cannot open $filename: $!";
+
+my $signature;
+read($fh, $signature, 8);
+
+my $expected_sig = "\x89PNG\r\n\x1a\n";
+if ($signature ne $expected_sig) {
+    die "invalid png signature\n";
+}
+
+print "PNG signature: valid\n";
+print "Chunks:\n";
+
+while (read($fh, my $header, 8)) {
+    my ($length, $type) = unpack("Na4", $header);
+    
+    my $data;
+    if ($length > 0) {
+        read($fh, $data, $length);
     } else {
-        warn "unrecognized line: $line\n";
+        $data = "";
+    }
+    
+    my $crc_bytes;
+    read($fh, $crc_bytes, 4);
+    my $expected_crc = unpack("N", $crc_bytes);
+    
+    my $calculated_crc = calculate_crc32($type . $data);
+    
+    my $crc_status = ($expected_crc == $calculated_crc) ? "OK" : "FAILED";
+    
+    printf "  %s: %d bytes, CRC %s\n", $type, $length, $crc_status;
+    
+    if ($type eq "IEND") {
+        last;
     }
 }
-close($in) or die "cannot close $input_file: $!";
 
-open(my $out, '>', $output_file) or die "cannot open $output_file: $!";
-
-say $out "Total requests: $total";
-
-say $out "By status:";
-for my $s (sort keys %status_count) {
-    say $out "  $s: $status_count{$s}";
-}
-
-say $out "Top 5 IPs:";
-my @ips = sort { $ip_count{$b} <=> $ip_count{$a} || $a cmp $b } keys %ip_count;
-my $top = @ips > 5 ? 5 : scalar @ips;
-for my $i (0 .. $top - 1) {
-    say $out "  $ips[$i]: $ip_count{$ips[$i]}";
-}
-
-close($out) or die "cannot close $output_file: $!";
-
-say "report written to $output_file";
+close($fh);

@@ -1,73 +1,84 @@
 def escapeJson(String s) {
+    if (s == null) return ""
     return s.replace("\\", "\\\\").replace("\"", "\\\"")
 }
 
-def csvToJson(String csvContent) {
-    def lines = csvContent.readLines().findAll { it.trim() }
-    if (lines.isEmpty()) return "[]"
+def m3uToJson(String content) {
+    def playlist = []
+    def currentDuration = 0
+    def currentTitle = ""
+    def currentArtist = ""
+    def lineNum = 0
 
-    def headers = lines[0].split(",").collect { it.trim() }
-    def sb = new StringBuilder("[")
-    boolean first = true
+    content.eachLine { line ->
+        lineNum++
+        def trimmed = line.trim()
+        if (trimmed.isEmpty() || trimmed == "#EXTM3U") return
 
-    for (int i = 1; i < lines.size(); i++) {
-        def values = lines[i].split(",").collect { it.trim() }
-        if (values.size() != headers.size()) {
-            System.err.println("row ${i + 1}: expected ${headers.size()} columns, got ${values.size()}, skipped")
-            continue
+        if (trimmed.startsWith("#EXTINF:")) {
+            def matcher = trimmed =~ /#EXTINF:(-?\d+),(.+)/
+            if (matcher.matches()) {
+                try {
+                    currentDuration = matcher[0][1] as Integer
+                    def meta = matcher[0][2]
+                    def parts = meta.split(" - ", 2)
+                    if (parts.length == 2) {
+                        currentArtist = parts[0].trim()
+                        currentTitle = parts[1].trim()
+                    } else {
+                        currentArtist = "Unknown"
+                        currentTitle = meta.trim()
+                    }
+                } catch (Exception e) {
+                    System.err.println("line ${lineNum}: error parsing EXTINF - ${e.message}")
+                }
+            } else {
+                System.err.println("line ${lineNum}: invalid EXTINF format")
+            }
+        } else if (!trimmed.startsWith("#")) {
+            if (currentTitle.isEmpty()) {
+                System.err.println("line ${lineNum}: file path without preceding metadata: ${trimmed}")
+                return
+            }
+            playlist << [
+                artist: currentArtist,
+                title: currentTitle,
+                duration: currentDuration,
+                path: trimmed
+            ]
+            currentTitle = ""
+            currentArtist = ""
+            currentDuration = 0
         }
-        if (!first) sb.append(",")
-        first = false
-        sb.append("{")
-        for (int j = 0; j < headers.size(); j++) {
-            if (j > 0) sb.append(",")
-            sb.append("\"${escapeJson(headers[j])}\":\"${escapeJson(values[j])}\"")
-        }
-        sb.append("}")
     }
-    sb.append("]")
-    return sb.toString()
+
+    def json = new StringBuilder("[\n")
+    playlist.eachWithIndex { track, i ->
+        json.append("  {\n")
+        json.append("    \"artist\": \"${escapeJson(track.artist)}\",\n")
+        json.append("    \"title\": \"${escapeJson(track.title)}\",\n")
+        json.append("    \"duration\": ${track.duration},\n")
+        json.append("    \"path\": \"${escapeJson(track.path)}\"\n")
+        json.append("  }")
+        if (i < playlist.size() - 1) json.append(",")
+        json.append("\n")
+    }
+    json.append("]")
+    return json.toString()
 }
 
-def jsonToCsv(String json) {
-    def content = json.trim()
-    if (!content.startsWith("[") || !content.endsWith("]")) {
-        throw new IllegalArgumentException("invalid json: no outer brackets")
-    }
-    content = content.substring(1, content.length() - 1).trim()
-    if (content.isEmpty()) return ""
+def m3uContent = """#EXTM3U
+#EXTINF:210,The Beatles - Come Together
+01 - Come Together.mp3
+#EXTINF:184,The Beatles - Something
+02 - Something.mp3
+#EXTINF:-1,Unknown Artist - Mystery Track
+mystery.mp3"""
 
-    def rows = []
-    def matcher = content =~ /\{([^{}]*)\}/
-    matcher.each { m ->
-        def pairMatcher = m[1] =~ /"([^"]+)"\s*:\s*"([^"]*)"/
-        def map = [:]
-        pairMatcher.each { pm -> map[pm[1]] = pm[2] }
-        rows << map
-    }
-
-    if (rows.isEmpty()) return ""
-
-    def allKeys = new LinkedHashSet<String>()
-    rows.each { r -> allKeys.addAll(r.keySet()) }
-    def keys = allKeys.toList()
-
-    def sb = new StringBuilder()
-    sb.append(keys.join(",")).append("\n")
-    rows.each { r ->
-        sb.append(keys.collect { r[it] ?: "" }.join(",")).append("\n")
-    }
-    return sb.toString()
+try {
+    def resultJson = m3uToJson(m3uContent)
+    println resultJson
+} catch (Exception e) {
+    System.err.println("fatal error: ${e.message}")
+    System.exit(1)
 }
-
-def csv = """name,age,city
-Alice,30,New York
-Bob,25,London"""
-
-def json = csvToJson(csv)
-println("json:")
-println(json)
-
-def back = jsonToCsv(json)
-println("csv back:")
-print(back)

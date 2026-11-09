@@ -1,61 +1,75 @@
-function process_file(input_path::String, output_path::String)
-    if !isfile(input_path)
-        error("file not found: $input_path")
-    end
+struct Item
+    key::Int32
+    val::Float64
+end
 
-    numbers = Float64[]
-    skipped = 0
-
-    open(input_path, "r") do io
-        for line in eachline(io)
-            stripped = strip(line)
-            if isempty(stripped)
-                continue
+function create_test_files()
+    files = [("sorted_a.bin", [1, 3, 5, 7]), ("sorted_b.bin", [2, 4, 6, 8])]
+    for (name, keys) in files
+        if !isfile(name)
+            open(name, "w") do io
+                for k in keys
+                    write(io, Int32(k))
+                    write(io, Float64(k) * 1.5)
+                end
             end
-            parts = split(stripped, ',')
-            if length(parts) < 2
-                @warn "line skipped, not enough columns" line = stripped
-                skipped += 1
-                continue
-            end
-            val = tryparse(Float64, strip(parts[2]))
-            if val === nothing
-                @warn "line skipped, not a number" line = stripped
-                skipped += 1
-                continue
-            end
-            push!(numbers, val)
         end
     end
+end
 
-    if isempty(numbers)
-        error("no valid numeric values in $input_path")
-    end
-
-    result = Dict(
-        "count" => length(numbers),
-        "sum" => sum(numbers),
-        "mean" => sum(numbers) / length(numbers),
-        "min" => minimum(numbers),
-        "max" => maximum(numbers),
-        "skipped" => skipped,
-    )
-
-    open(output_path, "w") do io
-        for k in ["count", "sum", "mean", "min", "max", "skipped"]
-            println(io, "$k: $(result[k])")
+function read_bin(filename::String)
+    items = Item[]
+    open(filename, "r") do io
+        while !eof(io)
+            k = read(io, Int32)
+            v = read(io, Float64)
+            push!(items, Item(k, v))
         end
     end
+    return items
+end
 
-    println("processed $(length(numbers)) values, skipped $skipped lines")
-    println("report written to $output_path")
+function merge_sorted(a::Vector{Item}, b::Vector{Item})
+    res = Item[]
+    i, j = 1, 1
+    while i <= length(a) && j <= length(b)
+        if a[i].key <= b[j].key
+            push!(res, a[i])
+            i += 1
+        else
+            push!(res, b[j])
+            j += 1
+        end
+    end
+    while i <= length(a)
+        push!(res, a[i])
+        i += 1
+    end
+    while j <= length(b)
+        push!(res, b[j])
+        j += 1
+    end
+    return res
 end
 
 function main()
-    input = length(ARGS) >= 1 ? ARGS[1] : "data.csv"
-    output = length(ARGS) >= 2 ? ARGS[2] : "stats.txt"
     try
-        process_file(input, output)
+        create_test_files()
+        a = read_bin("sorted_a.bin")
+        b = read_bin("sorted_b.bin")
+        merged = merge_sorted(a, b)
+        
+        open("merged.bin", "w") do io
+            for item in merged
+                write(io, item.key)
+                write(io, item.val)
+            end
+        end
+        
+        println("Merged $(length(merged)) records into merged.bin")
+        for item in merged
+            println("Key: $(item.key), Value: $(item.val)")
+        end
     catch e
         println(stderr, "error: ", e)
         exit(1)

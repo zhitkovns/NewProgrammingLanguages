@@ -2,89 +2,83 @@ with Ada.Text_IO; use Ada.Text_IO;
 with Ada.Integer_Text_IO; use Ada.Integer_Text_IO;
 
 procedure Main is
-   Upper : constant Integer := 100_000;
-   Num_Tasks : constant Integer := 4;
-   Chunk : constant Integer := (Upper - 1) / Num_Tasks;
+   N : constant Integer := 8;
+   type Int_Array is array (0 .. N - 1) of Integer;
+   Data : Int_Array := (5, 3, 8, 1, 9, 2, 7, 4);
 
-   protected Counter is
-      procedure Increment;
-      function Value return Integer;
-   private
-      Count : Integer := 0;
-   end Counter;
+   type Bit_Type is mod 2**8;
 
-   protected body Counter is
-      procedure Increment is
-      begin
-         Count := Count + 1;
-      end Increment;
-
-      function Value return Integer is
-      begin
-         return Count;
-      end Value;
-   end Counter;
-
-   task type Prime_Worker is
-      entry Start (Low, High : Integer);
+   task type Swap_Task is
+      entry Start (I, J, K : Integer);
       entry Finish;
-   end Prime_Worker;
+   end Swap_Task;
 
-   task body Prime_Worker is
-      L, H : Integer;
-      Is_Prime : Boolean;
+   task body Swap_Task is
+      Idx, Jmp, K_Param : Bit_Type;
+      L : Bit_Type;
+      Temp : Integer;
+      Ascending : Boolean;
+      Index_I, Index_L : Integer;
    begin
-      accept Start (Low, High : Integer) do
-         L := Low;
-         H := High;
+      accept Start (I, J, K : Integer) do
+         Idx := Bit_Type(I);
+         Jmp := Bit_Type(J);
+         K_Param := Bit_Type(K);
       end Start;
 
-      for N in L .. H loop
-         if N < 2 then
-            Is_Prime := False;
-         else
-            Is_Prime := True;
-            declare
-               D : Integer := 2;
-            begin
-               while D * D <= N loop
-                  if N mod D = 0 then
-                     Is_Prime := False;
-                     exit;
-                  end if;
-                  D := D + 1;
-               end loop;
-            end;
-         end if;
+      L := Idx xor Jmp;
+      Index_I := Integer(Idx);
+      Index_L := Integer(L);
 
-         if Is_Prime then
-            Counter.Increment;
+      if L > Idx then
+         Ascending := (Idx and K_Param) = 0;
+         if (Ascending and (Data (Index_I) > Data (Index_L))) or
+            (not Ascending and (Data (Index_I) < Data (Index_L)))
+         then
+            Temp := Data (Index_I);
+            Data (Index_I) := Data (Index_L);
+            Data (Index_L) := Temp;
          end if;
-      end loop;
+      end if;
 
       accept Finish;
-   end Prime_Worker;
+   end Swap_Task;
 
-   type Worker_Array is array (1 .. Num_Tasks) of Prime_Worker;
-   Workers : Worker_Array;
+   K : Integer := 2;
 begin
-   for K in Worker_Array'Range loop
+   Put ("initial: ");
+   for I in Data'Range loop
+      Put (Data (I), Width => 0);
+      Put (" ");
+   end loop;
+   New_Line;
+
+   while K <= N loop
       declare
-         Lo : constant Integer := 2 + (K - 1) * Chunk;
-         Hi : constant Integer :=
-           (if K = Num_Tasks then Upper else Lo + Chunk - 1);
+         J : Integer := K / 2;
       begin
-         Workers (K).Start (Lo, Hi);
+         while J > 0 loop
+            declare
+               type Task_Array is array (0 .. N - 1) of Swap_Task;
+               Tasks : Task_Array;
+            begin
+               for I in 0 .. N - 1 loop
+                  Tasks (I).Start (I, J, K);
+               end loop;
+               for I in 0 .. N - 1 loop
+                  Tasks (I).Finish;
+               end loop;
+            end;
+            J := J / 2;
+         end loop;
       end;
+      K := K * 2;
    end loop;
 
-   for K in Worker_Array'Range loop
-      Workers (K).Finish;
+   Put ("sorted: ");
+   for I in Data'Range loop
+      Put (Data (I), Width => 0);
+      Put (" ");
    end loop;
-
-   Put ("primes up to ");
-   Put (Upper, Width => 0);
-   Put (": ");
-   Put (Counter.Value, Width => 0);
    New_Line;
 end Main;

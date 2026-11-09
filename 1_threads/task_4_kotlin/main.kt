@@ -1,48 +1,50 @@
-import java.util.Random
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.thread
 import kotlin.concurrent.withLock
 
-class Account(val id: Int, var balance: Long) {
-    val lock = ReentrantLock()
-}
-
-fun transfer(from: Account, to: Account, amount: Long) {
-    // lock ordering by id to prevent deadlock
-    val first = if (from.id < to.id) from else to
-    val second = if (from.id < to.id) to else from
-
-    first.lock.withLock {
-        second.lock.withLock {
-            if (from.balance >= amount) {
-                from.balance -= amount
-                to.balance += amount
-            }
-        }
-    }
-}
-
 fun main() {
-    val accounts = (1..5).map { Account(it, 1000L) }
-    val initialTotal = accounts.map { it.balance }.sum()
+    val text = """
+        Kotlin is a modern programming language. It is concise and safe.
+        Kotlin is interoperable with Java. Many developers use Kotlin for Android.
+        Kotlin coroutines provide a way to write asynchronous code.
+    """.trimIndent().lowercase()
 
-    val threads = (1..4).map { t ->
+    val words = text.split(Regex("\\W+")).filter { it.isNotEmpty() }
+    val n = 2
+    val numThreads = 4
+    val chunkSize = words.size / numThreads
+
+    val globalCounts = HashMap<String, Int>()
+    val lock = ReentrantLock()
+
+    val threads = (0 until numThreads).map { i ->
         thread {
-            val rand = Random(t.toLong())
-            repeat(1000) {
-                val a = accounts[rand.nextInt(accounts.size)]
-                val b = accounts[rand.nextInt(accounts.size)]
-                if (a.id != b.id) {
-                    transfer(a, b, (1 + rand.nextInt(50)).toLong())
+            val start = i * chunkSize
+            val end = if (i == numThreads - 1) words.size else (i + 1) * chunkSize
+            val localCounts = HashMap<String, Int>()
+
+            for (j in start until end) {
+                if (j + n <= words.size) {
+                    val ngram = (j until j + n).joinToString(" ") { words[it] }
+                    localCounts[ngram] = localCounts.getOrDefault(ngram, 0) + 1
+                }
+            }
+
+            lock.withLock {
+                for ((ngram, count) in localCounts) {
+                    globalCounts[ngram] = globalCounts.getOrDefault(ngram, 0) + count
                 }
             }
         }
     }
+
     threads.forEach { it.join() }
 
-    val finalTotal = accounts.map { it.balance }.sum()
-    println("initial total: $initialTotal")
-    println("final total: $finalTotal")
-    println("invariant preserved: ${initialTotal == finalTotal}")
-    accounts.forEach { println("account ${it.id}: ${it.balance}") }
+    println("Top 5 bigrams:")
+    globalCounts.entries
+        .sortedByDescending { it.value }
+        .take(5)
+        .forEach { (ngram, count) ->
+            println("$ngram: $count")
+        }
 }

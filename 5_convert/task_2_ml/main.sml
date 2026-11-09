@@ -1,51 +1,48 @@
-fun listToSexp (lst : int list) : string =
-    case lst of
-        [] => "()"
-      | _ => "(" ^ String.concatWith " " (List.map Int.toString lst) ^ ")"
+local
+    exception ParseError of string
 
-fun sexpToList (s : string) : int list =
-    let
-        val trimmed = s
-        val len = size trimmed
-        fun isSpace c = c = #" " orelse c = #"\t"
-    in
-        if len < 2
-           orelse String.sub (trimmed, 0) <> #"("
-           orelse String.sub (trimmed, len - 1) <> #")"
-        then
-            raise Fail "expected sexp of form ( ... )"
-        else
-            let
-                val inner = String.substring (trimmed, 1, len - 2)
-                val tokens = String.tokens isSpace inner
-            in
-                List.map
-                    (fn t =>
-                        case Int.fromString t of
-                            SOME n => n
-                          | NONE => raise Fail ("not a number: " ^ t))
-                    tokens
-            end
-    end
+    fun joinInts [] = ""
+      | joinInts [x] = Int.toString x
+      | joinInts (x::xs) = Int.toString x ^ " " ^ joinInts xs
 
-fun sum (lst : int list) : int =
-    List.foldl (op +) 0 lst
+    fun listToSexp lst = "(" ^ joinInts lst ^ ")"
 
-fun main () =
-    let
-        val input = [1, 2, 3, 4, 5]
-        val encoded = listToSexp input
-        val _ = print ("input list: [1,2,3,4,5]\n")
-        val _ = print ("encoded: " ^ encoded ^ "\n")
-        val decoded = sexpToList encoded
-        val _ = print ("decoded: [" ^ String.concatWith "," (List.map Int.toString decoded) ^ "]\n")
-        val _ = print ("decoded sum: " ^ Int.toString (sum decoded) ^ "\n")
-        val empty = listToSexp []
-        val _ = print ("empty encoded: " ^ empty ^ "\n")
-        val emptyBack = sexpToList empty
-        val _ = print ("empty decoded length: " ^ Int.toString (List.length emptyBack) ^ "\n")
-    in
-        ()
-    end
+    fun parseInt s =
+        case Int.fromString s of
+            SOME v => v
+          | NONE => raise ParseError ("not a number: " ^ s)
 
-val _ = main ()
+    fun sexpToList str =
+        let
+            val len = String.size str
+        in
+            if len < 2 orelse String.sub(str, 0) <> #"(" orelse String.sub(str, len - 1) <> #")" then
+                raise ParseError "missing parentheses"
+            else
+                let
+                    val inner = String.substring(str, 1, len - 2)
+                    val tokens = String.tokens Char.isSpace inner
+                in
+                    List.map parseInt tokens
+                end
+        end
+
+    fun main () =
+        let
+            val original = [1, 2, 3, 4, 5]
+            val encoded = listToSexp original
+        in
+            print ("original list: [" ^ String.concatWith ", " (List.map Int.toString original) ^ "]\n");
+            print ("encoded sexp: " ^ encoded ^ "\n");
+            
+            (case sexpToList encoded of
+                parsed => print ("parsed back: [" ^ String.concatWith ", " (List.map Int.toString parsed) ^ "]\n"))
+            handle ParseError msg => print ("parse error: " ^ msg ^ "\n");
+            
+            (case sexpToList "(1 2 abc 4)" of
+                _ => print ("unexpected success\n"))
+            handle ParseError msg => print ("expected error caught: " ^ msg ^ "\n")
+        end
+in
+    val _ = main ()
+end

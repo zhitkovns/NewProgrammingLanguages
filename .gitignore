@@ -25,14 +25,20 @@ erl_crash.dump
 # Scala
 project/target/
 target/
+.bsp/
+.scala-build/
 
 # Lua
 *.luac
+
+# Lua
+*.obj
 
 # Julia
 Manifest.toml
 *.jl.cov
 *.jl.mem
+*.bin
 
 # Erlang
 *.beam
@@ -47,8 +53,10 @@ __pycache__/
 *.pyc
 *.mojopkg
 
-*.txt
-!input.txt
 client
-*.d
 .venv/
+output.txt
+4_client_server/task_4_objective_c/*.d
+5_convert/task_3_lisp/*.svg
+!file2.bin
+*.csv

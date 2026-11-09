@@ -4,50 +4,51 @@ const net = std.Io.net;
 pub fn main(init: std.process.Init) !void {
     const io = init.io;
 
-    var stream: ?net.Stream = null;
-    var attempts: u32 = 0;
+    const address = try net.IpAddress.parseIp4("127.0.0.1", 8082);
+    var server = try address.listen(io, .{ .mode = .stream, .protocol = .tcp, .reuse_address = true });
+    defer server.deinit(io);
 
-    while (attempts < 3) : (attempts += 1) {
-        std.debug.print("attempt {d} of 3\n", .{attempts + 1});
+    std.debug.print("Matrix TCP server listening on 127.0.0.1:8082\n", .{});
 
-        const address = try net.IpAddress.parseIp4("127.0.0.1", 8080);
-        stream = address.connect(io, .{ .mode = .stream, .protocol = .tcp }) catch |err| {
-            std.debug.print("connect error: {s}\n", .{@errorName(err)});
-            io.sleep(.fromMilliseconds(500), .awake) catch {};
-            continue;
-        };
-        break;
-    }
-
-    if (stream == null) {
-        std.debug.print("failed to connect after 3 attempts\n", .{});
-        return error.ConnectFailed;
-    }
-
-    const conn = stream.?;
+    var conn = try server.accept(io);
     defer conn.close(io);
 
-    std.debug.print("connected\n", .{});
+    std.debug.print("Client connected\n", .{});
 
-    const message = "Hello from Zig client\n";
-
-    var write_buf: [1024]u8 = undefined;
-    var writer = conn.writer(io, &write_buf);
-    try writer.interface.writeAll(message);
-    try writer.interface.flush();
-    std.debug.print("sent: Hello from Zig client\n", .{});
-
-    var read_buf: [1024]u8 = undefined;
+    var read_buf: [4096]u8 = undefined;
     var reader = conn.reader(io, &read_buf);
 
-    const maybe_line = reader.interface.takeDelimiter('\n') catch |err| {
-        std.debug.print("read error: {s}\n", .{@errorName(err)});
-        return err;
-    };
+    var n_buf: [4]u8 = undefined;
+    try reader.interface.readSliceAll(&n_buf);
+    const n = std.mem.readInt(u32, &n_buf, .little);
+    std.debug.print("Matrix size: {d}x{d}\n", .{ n, n });
 
-    if (maybe_line) |line| {
-        std.debug.print("received: {s}\n", .{line});
-    } else {
-        std.debug.print("connection closed by peer before newline\n", .{});
+    const total_elems = n * n;
+    const bytes_len = total_elems * 4;
+
+    var a_buf = try std.heap.page_allocator.alloc(u8, bytes_len);
+    defer std.heap.page_allocator.free(a_buf);
+
+    var b_buf = try std.heap.page_allocator.alloc(u8, bytes_len);
+    defer std.heap.page_allocator.free(b_buf);
+
+    try reader.interface.readSliceAll(a_buf);
+    try reader.interface.readSliceAll(b_buf);
+
+    var res_buf = try std.heap.page_allocator.alloc(u8, bytes_len);
+    defer std.heap.page_allocator.free(res_buf);
+
+    var i: usize = 0;
+    while (i < total_elems) : (i += 1) {
+        const a = std.mem.readInt(i32, a_buf[i * 4 ..][0..4], .little);
+        const b = std.mem.readInt(i32, b_buf[i * 4 ..][0..4], .little);
+        std.mem.writeInt(i32, res_buf[i * 4 ..][0..4], a + b, .little);
     }
+
+    var write_buf: [4096]u8 = undefined;
+    var writer = conn.writer(io, &write_buf);
+    try writer.interface.writeAll(res_buf);
+    try writer.interface.flush();
+
+    std.debug.print("Result sent, server stopping\n", .{});
 }
