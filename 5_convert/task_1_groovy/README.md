@@ -70,3 +70,6 @@ groovy main.groovy
   }
 ]
 ```
+
+## Ссылка на презентацию:
+https://disk.yandex.ru/i/QoabUDhfaqtjFQ

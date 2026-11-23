@@ -55,3 +55,6 @@ Key: 6, Value: 9.0
 Key: 7, Value: 10.5
 Key: 8, Value: 12.0
 ```
+
+## Ссылка на презентацию:
+https://disk.yandex.ru/i/-mkIkCbwZ2fAWw

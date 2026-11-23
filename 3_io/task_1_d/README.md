@@ -65,3 +65,6 @@ Sample rate: 8000 Hz
 Bits per sample: 8
 Duration: 1 seconds
 ```
+
+## Ссылка на презентацию:
+https://disk.yandex.ru/i/Z0mrTTYMbF0P_Q

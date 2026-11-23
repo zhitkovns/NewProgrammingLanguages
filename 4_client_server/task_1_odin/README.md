@@ -97,3 +97,6 @@ Received query: "myhost" from 127.0.0.1:61865
 Sent response: "192.168.1.100"
 Server stopped after 3 requests
 ```
+
+## Ссылка на презентацию:
+https://disk.yandex.ru/i/r0FaJszp_48vow

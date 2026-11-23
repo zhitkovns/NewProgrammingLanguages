@@ -51,3 +51,6 @@ encoded sexp: (1 2 3 4 5)
 parsed back: [1, 2, 3, 4, 5]
 expected error caught: not a number: abc
 ```
+
+## Ссылка на презентацию:
+https://disk.yandex.ru/i/fgQCMlUDakaibw

@@ -90,3 +90,6 @@ MISS
 > E5
 GAME OVER
 ```
+
+## Ссылка на презентацию:
+https://disk.yandex.ru/i/nT3WsjYhUJaeoA

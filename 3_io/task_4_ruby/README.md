@@ -72,3 +72,6 @@ written to output.txt
 Файл output.txt будет содержать секции и пары ключ=значение без
 комментариев, при этом значение password сохранится целиком
 (secret=with=equals).
+
+## Ссылка на презентацию:
+https://disk.yandex.ru/i/9eUGuEcscYVs3w

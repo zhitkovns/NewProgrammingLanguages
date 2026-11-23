@@ -57,3 +57,6 @@ file1.txt:1: hello world
 file2.txt:2: hello from file2
 total matches: 2
 ```
+
+## Ссылка на презентацию:
+https://disk.yandex.ru/i/qLPFl-0j_twIsQ

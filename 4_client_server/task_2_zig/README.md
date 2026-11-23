@@ -65,3 +65,6 @@ Matrix TCP server listening on 127.0.0.1:8082
 Client connected
 Matrix size: 2x2
 Result sent, server stopping
+
+## Ссылка на презентацию:
+https://disk.yandex.ru/i/Rue0aauISdy3wA

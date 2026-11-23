@@ -54,3 +54,6 @@ a modern: 1
 modern programming: 1
 programming language: 1
 ```
+
+## Ссылка на презентацию:
+https://disk.yandex.ru/i/TKdcbnKR6COQyg

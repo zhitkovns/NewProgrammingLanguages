@@ -100,3 +100,6 @@ Received command: RELEASE lock
 Released lock
 Client disconnected
 ```
+
+## Ссылка на презентацию:
+https://disk.yandex.ru/i/kgG1X3OE3Jq__Q

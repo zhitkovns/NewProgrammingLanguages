@@ -51,3 +51,6 @@ height: 4
 contains 40: true
 contains 45: false
 ```
+
+## Ссылка на презентацию:
+https://disk.yandex.ru/i/KhKjI2RZpNO1Ew

@@ -48,3 +48,6 @@ guile main.scm
 ```text
 Min vertex cover size: 2
 ```
+
+## Ссылка на презентацию:
+https://disk.yandex.ru/i/IP8oLviEQwwjog

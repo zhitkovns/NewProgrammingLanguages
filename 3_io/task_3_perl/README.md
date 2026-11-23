@@ -64,3 +64,6 @@ Chunks:
   IDAT: 13 bytes, CRC OK
   IEND: 0 bytes, CRC OK
 ```
+
+## Ссылка на презентацию:
+https://disk.yandex.ru/i/8K8bNnms7L7tcQ

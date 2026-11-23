@@ -46,3 +46,6 @@ lua main.lua
 ```text
 Suffix array for 'banana': 6 4 2 1 5 3
 ```
+
+## Ссылка на презентацию:
+https://disk.yandex.ru/i/TmxUOiyAV_YUuA

@@ -78,3 +78,6 @@ filename,compressed_size,uncompressed_size,compression_method
 file1.txt,0,0,0
 file2.bin,0,0,0
 ```
+
+## Ссылка на презентацию:
+https://disk.yandex.ru/i/jH-jdlqKBzS6-g

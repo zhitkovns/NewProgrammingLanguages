@@ -53,3 +53,6 @@ stack ghc main.hs
 "h?llo" matches "hello": True
 "h?llo" matches "hllo": False
 ```
+
+## Ссылка на презентацию:
+https://disk.yandex.ru/i/8pr_3Oi10DZOJw

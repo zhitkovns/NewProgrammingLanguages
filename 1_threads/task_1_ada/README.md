@@ -50,3 +50,6 @@ gnatmake main.adb
 initial: 5 3 8 1 9 2 7 4 
 sorted: 1 2 3 4 5 7 8 9 
 ```
+
+## Ссылка на презентацию:
+https://disk.yandex.ru/i/SqCBXDPB5_qdbw
