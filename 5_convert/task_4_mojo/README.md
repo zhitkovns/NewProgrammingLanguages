@@ -53,10 +53,7 @@ source ~/mojo_env/bin/activate
 uv pip install mojo --prerelease allow
 ```
 
-4. Перейдите в папку с программой (путь к диску D: в WSL):
-```bash
-cd "/mnt/d/Program Files (x86)/VS Code projects/new_languages/individual/NewProgrammingLanguages/5_convert/task_4_mojo"
-```
+4. Перейдите в папку с программой
 
 5. Создайте тестовый ZIP-архив (пустые файлы без сжатия):
 ```bash
